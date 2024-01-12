@@ -30,6 +30,7 @@ public class DynamicOctreeRuntime : ModuleRules
 			"Engine",
 			"Slate",
 			"SlateCore",
+			"GeometryCore",
 		});
 
 
