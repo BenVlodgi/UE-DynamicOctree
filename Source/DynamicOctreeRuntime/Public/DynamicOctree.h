@@ -53,17 +53,39 @@ public:
 
 	UDynamicOctree();
 
+
 	/**
 	 * Clears the octree and initializes it with current parameters.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
 	void InitializeOctree(const bool bForce = false);
 
+
 	/**
-	 * Rebuilds the Octree Structure.
+	 * Rebuilds the Octree Structure, maintaining the objects already added..
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
 	void Rebuild();
+
+
+	/**
+	 * Removes Invalid Objects from the collection.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
+	void RemoveInvalidObjects();
+
+
+	/**
+	 * Erases all data in this collection.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
+	void Empty();
+
+	/**
+	 * Returns true if there are no valid objects in the collection.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
+	UPARAM(DisplayName = "IsEmpty") bool IsEmpty() const;
 
 	/**
 	 * Inserts an object in the octree. If it already exists, update its location and bounds.

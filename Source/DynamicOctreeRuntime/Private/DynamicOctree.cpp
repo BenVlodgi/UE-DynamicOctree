@@ -57,6 +57,46 @@ void UDynamicOctree::Rebuild()
 }
 
 
+void UDynamicOctree::RemoveInvalidObjects()
+{
+	TArray<int32> IDsToRemove;
+	for (const auto& ObjectIDToObject : ObjectIDToObjectMap)
+	{
+		if (!ObjectIDToObject.Value.IsValid())
+		{
+			IDsToRemove.Add(ObjectIDToObject.Key);
+		}
+	}
+
+	for (const int32& ObjectID : IDsToRemove)
+	{
+		ObjectIDToObjectMap.Remove(ObjectID);
+		Octree.RemoveObject(ObjectID);
+	}
+}
+
+
+void UDynamicOctree::Empty()
+{
+	ObjectIDToObjectMap.Empty();
+	InitializeOctree(true);
+}
+
+
+bool UDynamicOctree::IsEmpty() const
+{
+	for (const auto& ObjectIDToObject : ObjectIDToObjectMap)
+	{
+		if (ObjectIDToObject.Value.IsValid())
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
 bool UDynamicOctree::AddOrUpdateObject(UObject* Object)
 {
 	if (!Object)
