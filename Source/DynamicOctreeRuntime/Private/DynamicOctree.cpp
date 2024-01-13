@@ -6,6 +6,7 @@
 
 #include "DynamicOctreeObjectInterface.h"
 
+DEFINE_LOG_CATEGORY(LogDynamicOctree);
 
 
 UDynamicOctree::UDynamicOctree()
@@ -51,7 +52,7 @@ void UDynamicOctree::Rebuild()
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("UDynamicOctree::Rebuild - Failed to get Object bounds. This shouldn't happen, as the object was added before rebuild."));
+			UE_LOG(LogDynamicOctree, Warning, TEXT("UDynamicOctree::Rebuild - Failed to get Object bounds. This shouldn't happen, as the object was added before rebuild."));
 		}
 	}
 }
@@ -101,14 +102,14 @@ bool UDynamicOctree::AddOrUpdateObject(UObject* Object)
 {
 	if (!Object)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UDynamicOctree::RegisterObject - Attempted to register a null object."));
+		UE_LOG(LogDynamicOctree, Warning, TEXT("UDynamicOctree::RegisterObject - Attempted to register a null object."));
 		return false;
 	}
 
 	FBox ObjectBoundsBox;
 	if (!GetObjectBounds(Object, ObjectBoundsBox))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UDynamicOctree::RegisterObject - Failed to get object bounds."));
+		UE_LOG(LogDynamicOctree, Warning, TEXT("UDynamicOctree::RegisterObject - Failed to get object bounds."));
 		return false;
 	}
 
@@ -135,7 +136,7 @@ bool UDynamicOctree::ContainsObject(UObject* Object)
 {
 	if (!Object)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UDynamicOctree::ContainsObject - Failed to check null object."));
+		UE_LOG(LogDynamicOctree, Warning, TEXT("UDynamicOctree::ContainsObject - Failed to check null object."));
 		return false;
 	}
 
@@ -147,7 +148,7 @@ bool UDynamicOctree::RemoveObject(UObject* Object)
 {
 	if (!Object)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UDynamicOctree::UnregisterObject - Attempted to unregister a null object."));
+		UE_LOG(LogDynamicOctree, Warning, TEXT("UDynamicOctree::UnregisterObject - Attempted to unregister a null object."));
 		return false;
 	}
 
@@ -228,7 +229,7 @@ bool UDynamicOctree::GetObjectBounds(const UObject* Object, FBox& Bounds) const
 {
 	if (!Object)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("GetObjectBounds - Null object provided."));
+		UE_LOG(LogDynamicOctree, Warning, TEXT("GetObjectBounds - Null object provided."));
 		return false;
 	}
 
@@ -250,7 +251,7 @@ bool UDynamicOctree::GetObjectBounds(const UObject* Object, FBox& Bounds) const
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("GetObjectBounds - Object type not supported or does not implement DynamicOctreeObjectInterface."));
+		UE_LOG(LogDynamicOctree, Warning, TEXT("GetObjectBounds - Object type not supported or does not implement DynamicOctreeObjectInterface."));
 		return false;
 	}
 }

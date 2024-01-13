@@ -10,6 +10,9 @@
 
 #include "DynamicOctree.generated.h"
 
+
+DECLARE_LOG_CATEGORY_EXTERN(LogDynamicOctree, Log, All);
+
 /**
  * UDynamicOctree maintains a collection of weak objects. The collection is arranged
  * as a dynamic sparse octree of axis-aligned uniform grid cells.
