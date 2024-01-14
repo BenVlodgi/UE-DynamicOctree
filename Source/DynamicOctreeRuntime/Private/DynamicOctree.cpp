@@ -17,6 +17,8 @@ UDynamicOctree::UDynamicOctree()
 
 void UDynamicOctree::InitializeOctree(const bool bForce)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(InitializeOctree);
+
 	if (!bOctreeInitialized || bForce)
 	{
 		Octree = UE::Geometry::FSparseDynamicOctree3();
@@ -32,6 +34,8 @@ void UDynamicOctree::InitializeOctree(const bool bForce)
 
 void UDynamicOctree::Rebuild()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(Rebuild);
+
 	// Clears Octree.
 	InitializeOctree(true);
 
@@ -60,6 +64,8 @@ void UDynamicOctree::Rebuild()
 
 void UDynamicOctree::RemoveInvalidObjects()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(RemoveInvalidObjects);
+
 	TArray<int32> IDsToRemove;
 	for (const auto& ObjectIDToObject : ObjectIDToObjectMap)
 	{
@@ -100,6 +106,8 @@ bool UDynamicOctree::IsEmpty() const
 
 bool UDynamicOctree::AddOrUpdateObject(UObject* Object)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(AddOrUpdateObject);
+
 	if (!Object)
 	{
 		UE_LOG(LogDynamicOctree, Warning, TEXT("UDynamicOctree::RegisterObject - Attempted to register a null object."));
@@ -146,6 +154,8 @@ bool UDynamicOctree::ContainsObject(UObject* Object)
 
 bool UDynamicOctree::RemoveObject(UObject* Object)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(RemoveObject);
+
 	if (!Object)
 	{
 		UE_LOG(LogDynamicOctree, Warning, TEXT("UDynamicOctree::UnregisterObject - Attempted to unregister a null object."));
@@ -159,6 +169,8 @@ bool UDynamicOctree::RemoveObject(UObject* Object)
 
 TArray<UObject*> UDynamicOctree::GetObjectsInArea(const FBox& QueryBounds, const bool bStrict) const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GetObjectsInArea);
+
 	const UE::Geometry::FAxisAlignedBox3d AxisAlignedBox3d = BoxBoundsToAxisAlignedBounds(QueryBounds);
 
 	// Query objects within the specified spatial region
@@ -194,6 +206,8 @@ TArray<UObject*> UDynamicOctree::GetObjectsInArea(const FBox& QueryBounds, const
 
 UObject* UDynamicOctree::FindNearestHitObject(const FVector Start, const FVector Direction, const double MaxDistance) const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(FindNearestHitObject);
+
 	const FRay Ray = FRay(Start, Direction);
 	const double UseMaxDistance = MaxDistance >= 0 ? MaxDistance : TNumericLimits<double>::Max();
 
@@ -210,6 +224,8 @@ UObject* UDynamicOctree::FindNearestHitObject(const FVector Start, const FVector
 
 TArray<UObject*> UDynamicOctree::GetAllObjects() const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GetAllObjects);
+
 	TArray<TWeakObjectPtr<UObject>> AllWeakObjects;
 	ObjectIDToObjectMap.GenerateValueArray(AllWeakObjects);
 
@@ -227,6 +243,8 @@ TArray<UObject*> UDynamicOctree::GetAllObjects() const
 
 bool UDynamicOctree::GetObjectBounds(const UObject* Object, FBox& Bounds) const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(GetObjectBounds);
+
 	if (!Object)
 	{
 		UE_LOG(LogDynamicOctree, Warning, TEXT("GetObjectBounds - Null object provided."));
