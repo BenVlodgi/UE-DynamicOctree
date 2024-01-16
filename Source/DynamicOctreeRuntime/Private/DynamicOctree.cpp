@@ -130,10 +130,12 @@ bool UDynamicOctree::AddOrUpdateObject(UObject* Object)
 	if (!Octree.ContainsObject(ObjectID))
 	{
 		Octree.InsertObject(ObjectID, AxisAlignedBox3d);
+		ObjectIDToObjectMap.Add(ObjectID, Object);
 	}
 	else if (Octree.CheckIfObjectNeedsReinsert(ObjectID, AxisAlignedBox3d, SuggestedCellID))
 	{
 		Octree.ReinsertObject(ObjectID, AxisAlignedBox3d, SuggestedCellID);
+		ObjectIDToObjectMap.Add(ObjectID, Object);
 	}
 
 	return true;
