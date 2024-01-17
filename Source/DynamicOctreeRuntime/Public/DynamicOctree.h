@@ -91,12 +91,18 @@ public:
 	UPARAM(DisplayName = "IsEmpty") bool IsEmpty() const;
 
 	/**
+	 * Returns count of registered objects even if they became null.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree", meta = (keywords = "number, size, count"))
+	UPARAM(DisplayName = "Length") int Length() const;
+
+	/**
 	 * Inserts an object in the octree. If it already exists, update its location and bounds.
 	 * 
 	 * @param Object Object to add to tree.
 	 * @return True if the object was successfully added or already in the tree.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
+	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree", meta = (keywords = "add object"))
 	UPARAM(DisplayName = "InTree") bool AddOrUpdateObject(UObject* Object);
 
 	/**
@@ -118,9 +124,9 @@ public:
 	 * Query objects within the specified spatial region.
 	 * 
 	 * @param bStrict When true: only objects which overlap the Query Area will be returned.
-	 *                When false: nearby objects in the same octree cell will be returned.
+	 *                When false: nearby objects in the same octree cell may be returned.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
+	UFUNCTION(BlueprintCallable, BlueprintPure = "false", Category = "Dynamic Octree", meta = (keywords = "query"))
 	UPARAM(DisplayName = "Objects") TArray<UObject*> GetObjectsInArea(const FBox& QueryBounds, const bool bStrict = true) const;
 
 
@@ -132,7 +138,7 @@ public:
 	 * @param MaxDistance maximum hit distance. If Negative will not be limited.
 	 * @return Hit object if any.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
+	UFUNCTION(BlueprintCallable, BlueprintPure = "false", Category = "Dynamic Octree")
 	UPARAM(DisplayName = "Object") UObject* FindNearestHitObject(const FVector Start, const FVector Direction, const double MaxDistance = -1) const;
 
 	/**
@@ -140,7 +146,7 @@ public:
 	 * 
 	 * @return Array of all valid objects added to the tree.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
+	UFUNCTION(BlueprintCallable, BlueprintPure = "false", Category = "Dynamic Octree")
 	UPARAM(DisplayName = "Objects") TArray<UObject*> GetAllObjects() const;
 
 

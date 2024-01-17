@@ -103,6 +103,11 @@ bool UDynamicOctree::IsEmpty() const
 	return true;
 }
 
+int UDynamicOctree::Length() const
+{
+	return ObjectIDToObjectMap.Num();
+}
+
 
 bool UDynamicOctree::AddOrUpdateObject(UObject* Object)
 {
@@ -194,13 +199,17 @@ TArray<UObject*> UDynamicOctree::GetObjectsInArea(const FBox& QueryBounds, const
 				FBox ObjectBounds;
 				GetObjectBounds(Object, ObjectBounds);
 
+				// AABB test object bounds to query bounds
+				if (!QueryBounds.Intersect(ObjectBounds))
+				{
+					continue;
+				}
 			}
 
 			ResultObjects.Add(Object);
 		}
 	}
 	ResultObjects.Shrink();
-
 
 	return ResultObjects;
 }
