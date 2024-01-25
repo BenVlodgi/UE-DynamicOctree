@@ -1,7 +1,7 @@
 <br/>
 <p align="center">
   <a href="https://github.com/BenVlodgi/UE-DynamicOctree">
-    <img src="https://github.com/BenVlodgi/UE-DynamicOctree/assets/1462374/1c61fbd5-0846-43f6-a581-b638c14e0d45" alt="Logo" width="256" height="256">
+    <img src="https://github.com/BenVlodgi/UE-DynamicOctree/assets/1462374/952437e7-1917-4587-b6ff-f094352c332e" alt="Logo" width="640" height="320">
   </a>
 </p>
 
@@ -10,4 +10,3 @@ This Unreal Engine plugin provides `UDynamicOctree`. An object which maintains a
 The collection uses `FSparseDynamicOctree3` to maintain the object organization.
 
 Objects can be added/updated/removed at runtime.
-
