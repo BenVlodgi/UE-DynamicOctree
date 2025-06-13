@@ -34,21 +34,21 @@ protected:
 	TMap<int32, TWeakObjectPtr<UObject>> ObjectIDToObjectMap;
 
 	//** True once the Octree is initialized and shouldn't have its structure changed. */
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Dynamic Octree")
 	bool bOctreeInitialized;
 
 public:
 
 	//** */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dynamic Octree")
 	double RootDimensionSize = 10000.0;
 
 	//** Fraction we expand the dimension of any cell, to allow extra space to fit objects. */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dynamic Octree")
 	double MaxExpandFactor = 0.25;
 
 	//** Objects will not be inserted more than this many levels deep from a Root cell. */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dynamic Octree")
 	int MaxTreeDepth = 10;
 
 
@@ -81,7 +81,7 @@ public:
 	/**
 	 * Erases all data in this collection.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
+	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree", meta = (Keywords = "remove, clear"))
 	void Empty();
 
 	/**
@@ -123,12 +123,12 @@ public:
 	/**
 	 * Query objects within the specified spatial region.
 	 * 
-	 * @param bStrict When true: only objects which overlap the Query Area will be returned.
+	 * @param bStrict Whether or not to use an AABB test to ensure results are within exact given bounds. Set to false, if you will be doing your own simple distance/range check on the results.
+	 *				  When true: only objects which overlap the Query Area will be returned.
 	 *                When false: nearby objects in the same octree cell may be returned.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure = "false", Category = "Dynamic Octree", meta = (keywords = "query"))
 	UPARAM(DisplayName = "Objects") TArray<UObject*> GetObjectsInArea(const FBox& QueryBounds, const bool bStrict = true) const;
-
 
 	/**
 	 * Find nearest ray-hit point with objects in tree.

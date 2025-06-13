@@ -2,6 +2,7 @@
 
 
 #include "DynamicOctree.h"
+#include "GameFramework/Actor.h"
 #include "Math/NumericLimits.h"
 
 #include "DynamicOctreeObjectInterface.h"
@@ -40,7 +41,7 @@ void UDynamicOctree::Rebuild()
 	InitializeOctree(true);
 
 	// Remove any invalid objects.
-	ObjectIDToObjectMap.FilterByPredicate(
+	ObjectIDToObjectMap = ObjectIDToObjectMap.FilterByPredicate(
 		[](const TPair<int32, TWeakObjectPtr<UObject>>& IDToObject)
 		{
 			return IDToObject.Value.IsValid();
@@ -128,18 +129,18 @@ bool UDynamicOctree::AddOrUpdateObject(UObject* Object)
 
 	// Register or update the object in the octree
 	const int ObjectID = Object->GetUniqueID();
-	const UE::Geometry::FAxisAlignedBox3d AxisAlignedBox3d = BoxBoundsToAxisAlignedBounds(ObjectBoundsBox);
+	const UE::Geometry::FAxisAlignedBox3d AxisAlignedBox3dBounds = BoxBoundsToAxisAlignedBounds(ObjectBoundsBox);
 	
 	uint32 SuggestedCellID = -1;
 
 	if (!Octree.ContainsObject(ObjectID))
 	{
-		Octree.InsertObject(ObjectID, AxisAlignedBox3d);
+		Octree.InsertObject(ObjectID, AxisAlignedBox3dBounds);
 		ObjectIDToObjectMap.Add(ObjectID, Object);
 	}
-	else if (Octree.CheckIfObjectNeedsReinsert(ObjectID, AxisAlignedBox3d, SuggestedCellID))
+	else if (Octree.CheckIfObjectNeedsReinsert(ObjectID, AxisAlignedBox3dBounds, SuggestedCellID))
 	{
-		Octree.ReinsertObject(ObjectID, AxisAlignedBox3d, SuggestedCellID);
+		Octree.ReinsertObject(ObjectID, AxisAlignedBox3dBounds, SuggestedCellID);
 		ObjectIDToObjectMap.Add(ObjectID, Object);
 	}
 
@@ -213,7 +214,6 @@ TArray<UObject*> UDynamicOctree::GetObjectsInArea(const FBox& QueryBounds, const
 
 	return ResultObjects;
 }
-
 
 UObject* UDynamicOctree::FindNearestHitObject(const FVector Start, const FVector Direction, const double MaxDistance) const
 {
