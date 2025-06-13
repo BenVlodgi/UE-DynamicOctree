@@ -25,4 +25,5 @@ public:
 	 */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Dynamic Octree")
 	void GetWorldBounds(FBox& Bounds) const;
+	virtual void GetWorldBounds_Implementation(FBox& Bounds) const;
 };

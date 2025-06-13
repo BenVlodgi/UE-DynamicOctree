@@ -3,3 +3,6 @@
 
 #include "DynamicOctreeObjectInterface.h"
 
+void IDynamicOctreeObjectInterface::GetWorldBounds_Implementation(FBox& Bounds) const
+{
+}
