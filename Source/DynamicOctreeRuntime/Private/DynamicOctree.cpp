@@ -148,7 +148,7 @@ bool UDynamicOctree::AddOrUpdateObject(UObject* Object)
 }
 
 
-bool UDynamicOctree::ContainsObject(UObject* Object)
+bool UDynamicOctree::ContainsObject(UObject* Object) const
 {
 	if (!Object)
 	{
@@ -170,12 +170,17 @@ bool UDynamicOctree::RemoveObject(UObject* Object)
 		return false;
 	}
 
+	const uint32 ObjectID = Object->GetUniqueID();
+	
+	// Forget ID mapping.
+	ObjectIDToObjectMap.Remove(ObjectID);
+	
 	// Unregister the object from the octree
-	return Octree.RemoveObject(Object->GetUniqueID());
+	return Octree.RemoveObject(ObjectID);
 }
 
 
-TArray<UObject*> UDynamicOctree::GetObjectsInArea(const FBox& QueryBounds, const bool bStrict) const
+TArray<UObject*> UDynamicOctree::GetObjectsInArea(const FBox& QueryBounds, const bool bStrict, const TSubclassOf<UObject> Class) const
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GetObjectsInArea);
 
@@ -194,6 +199,12 @@ TArray<UObject*> UDynamicOctree::GetObjectsInArea(const FBox& QueryBounds, const
 		if (ObjectPtr.IsValid())
 		{
 			UObject* Object = ObjectPtr.Get();
+
+			if (Class && !Object->IsA(Class))
+			{
+				continue;
+			}
+
 			if (bStrict)
 			{
 				// Strictly test AABB
@@ -202,6 +213,7 @@ TArray<UObject*> UDynamicOctree::GetObjectsInArea(const FBox& QueryBounds, const
 
 				// AABB test object bounds to query bounds
 				if (!QueryBounds.Intersect(ObjectBounds))
+
 				{
 					continue;
 				}
@@ -210,30 +222,51 @@ TArray<UObject*> UDynamicOctree::GetObjectsInArea(const FBox& QueryBounds, const
 			ResultObjects.Add(Object);
 		}
 	}
+
 	ResultObjects.Shrink();
 
 	return ResultObjects;
 }
 
-UObject* UDynamicOctree::FindNearestHitObject(const FVector Start, const FVector Direction, const double MaxDistance) const
+UObject* UDynamicOctree::FindNearestHitObject(const FVector Start, const FVector Direction, const double MaxDistance, const TSubclassOf<UObject> Class) const
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(FindNearestHitObject);
 
 	const FRay Ray = FRay(Start, Direction);
 	const double UseMaxDistance = MaxDistance >= 0 ? MaxDistance : TNumericLimits<double>::Max();
 
-	const int32 HitObjectID = Octree.FindNearestHitObject(
-		Ray,
-		[this](const int ID){ return GetObjectIDAxisAlignedBounds(ID); },
-		[this](const int ID, const FRay3d& Ray){ return GetObjectIDDistanceToRay(ID, Ray); },
-		UseMaxDistance
-	);
+	int32 HitObjectID;
 
-	return HitObjectID >= 0 ? GetObjectFromID(HitObjectID) : nullptr;
+	if (Class && Class != UObject::GetClass())
+	{
+		HitObjectID = Octree.FindNearestHitObject(
+			Ray,
+			[this](const int ID) { return GetObjectIDAxisAlignedBounds(ID); },
+			[this, Class](const int ID, const FRay3d& Ray) { return GetObjectIDDistanceToRayForClass(ID, Ray, Class); },
+			UseMaxDistance
+		);
+	}
+	else
+	{
+		HitObjectID = Octree.FindNearestHitObject(
+			Ray,
+			[this](const int ID) { return GetObjectIDAxisAlignedBounds(ID); },
+			[this](const int ID, const FRay3d& Ray) { return GetObjectIDDistanceToRay(ID, Ray); },
+			UseMaxDistance
+		);
+	}
+
+	UObject* Object = GetObjectFromID(HitObjectID);
+	if (IsValid(Object) && (!Class || Object->IsA(Class)))
+	{
+		return Object;
+	}
+
+	return nullptr;
 }
 
 
-TArray<UObject*> UDynamicOctree::GetAllObjects() const
+TArray<UObject*> UDynamicOctree::GetAllObjects(const TSubclassOf<UObject> Class) const
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(GetAllObjects);
 
@@ -245,9 +278,17 @@ TArray<UObject*> UDynamicOctree::GetAllObjects() const
 	{
 		if (WeakObject.IsValid())
 		{
-			AllObjects.Add(WeakObject.Get());
+			UObject* Object = WeakObject.Get();
+
+			if (Class && !Object->IsA(Class))
+			{
+				continue;
+			}
+
+			AllObjects.Add(Object);
 		}
 	}
+
 	return AllObjects;
 }
 
@@ -314,11 +355,38 @@ UE::Geometry::FAxisAlignedBox3d UDynamicOctree::GetObjectIDAxisAlignedBounds(con
 }
 
 
-double UDynamicOctree::GetObjectIDDistanceToRay(int ObjectID, const FRay3d& Ray) const
+double UDynamicOctree::GetObjectIDDistanceToRay(const int ObjectID, const FRay3d& Ray) const
 {
 	const UObject* Object = GetObjectFromID(ObjectID);
 	if (IsValid(Object))
 	{
+		FBox ObjectBoundsBox;
+		if (GetObjectBounds(Object, ObjectBoundsBox))
+		{
+			return Ray.Dist(ObjectBoundsBox.GetCenter());
+		}
+	}
+
+	return TNumericLimits<double>::Max();
+}
+
+double UDynamicOctree::GetObjectIDDistanceToRayForClass(const int ObjectID, const FRay3d& Ray, const TSubclassOf<UObject> Class) const
+{
+	checkCode(
+		if (!ensureMsgf(Class != nullptr, TEXT("GetObjectIDDistanceToRayForClass: Class cannot be null")))
+		{
+			return TNumericLimits<double>::Max();
+		}
+	);
+
+	const UObject* Object = GetObjectFromID(ObjectID);
+	if (IsValid(Object))
+	{
+		if (!Object->IsA(Class))
+		{
+			return TNumericLimits<double>::Max();
+		}
+
 		FBox ObjectBoundsBox;
 		if (GetObjectBounds(Object, ObjectBoundsBox))
 		{

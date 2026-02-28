@@ -29,7 +29,13 @@ protected:
 	/** Octree to store registered objects. */
 	UE::Geometry::FSparseDynamicOctree3 Octree;
 
-	/** Map of objects in the tree. */
+	/** Map of objects in the tree.
+	 * 
+	 * TODO: Use a reverse lookup, and create own ID's incrememntally.
+	 * Right now GetUniqueID() is uint which we convert to int.
+	 * int: -1 is considered invalud in the ray intersection, which
+	 * will clash if the UniqueID is 4294967295.
+	 */
 	UPROPERTY()
 	TMap<int32, TWeakObjectPtr<UObject>> ObjectIDToObjectMap;
 
@@ -108,8 +114,8 @@ public:
 	/**
 	 * Test if an object is stored in the tree.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
-	UPARAM(DisplayName = "InTree") bool ContainsObject(UObject* Object);
+	UFUNCTION(BlueprintPure, Category = "Dynamic Octree")
+	[[nodiscard]] UPARAM(DisplayName = "InTree") bool ContainsObject(UObject* Object) const;
 
 	/**
 	 * Remove an object from the octree
@@ -126,28 +132,31 @@ public:
 	 * @param bStrict Whether or not to use an AABB test to ensure results are within exact given bounds. Set to false, if you will be doing your own simple distance/range check on the results.
 	 *				  When true: only objects which overlap the Query Area will be returned.
 	 *                When false: nearby objects in the same octree cell may be returned.
+	 * @param Class   Optional Class filter.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = "false", Category = "Dynamic Octree", meta = (keywords = "query"))
-	UPARAM(DisplayName = "Objects") TArray<UObject*> GetObjectsInArea(const FBox& QueryBounds, const bool bStrict = true) const;
+	UFUNCTION(BlueprintCallable, BlueprintPure = "false", Category = "Dynamic Octree", meta = (DeterminesOutputType = "Class", DynamicOutput = "Objects", keywords = "query"))
+	[[nodiscard]] UPARAM(DisplayName = "Objects") TArray<UObject*> GetObjectsInArea(const FBox& QueryBounds, const bool bStrict = true, const TSubclassOf<UObject> Class = nullptr) const;
 
 	/**
 	 * Find nearest ray-hit point with objects in tree.
 	 * 
-	 * @param Start Start of the Ray
-	 * @param Direction Direction of the Ray
-	 * @param MaxDistance maximum hit distance. If Negative will not be limited.
+	 * @param Start			Start of the Ray
+	 * @param Direction		Direction of the Ray
+	 * @param MaxDistance	maximum hit distance. If Negative will not be limited.
+	 * @param Class			Optional Class filter. If specified, only objects of this class (or subclasses) will be considered.
 	 * @return Hit object if any.
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure = "false", Category = "Dynamic Octree")
-	UPARAM(DisplayName = "Object") UObject* FindNearestHitObject(const FVector Start, const FVector Direction, const double MaxDistance = -1) const;
+	[[nodiscard]] UPARAM(DisplayName = "Object") UObject* FindNearestHitObject(const FVector Start, const FVector Direction, const double MaxDistance = -1, const TSubclassOf<UObject> Class = nullptr) const;
 
 	/**
 	 * Get all valid objects added to the tree.
+	 * @param Class   Optional Class filter.
 	 * 
 	 * @return Array of all valid objects added to the tree.
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure = "false", Category = "Dynamic Octree")
-	UPARAM(DisplayName = "Objects") TArray<UObject*> GetAllObjects() const;
+	UFUNCTION(BlueprintCallable, BlueprintPure = "false", Category = "Dynamic Octree", meta = (DeterminesOutputType = "Class"))
+	[[nodiscard]] UPARAM(DisplayName = "Objects") TArray<UObject*> GetAllObjects(const TSubclassOf<UObject> Class = nullptr) const;
 
 
 protected:
@@ -155,9 +164,10 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
 	bool GetObjectBounds(const UObject* Object, FBox& Bounds) const;
 
-	UObject* GetObjectFromID(const int ObjectID) const;
-	UE::Geometry::FAxisAlignedBox3d BoxBoundsToAxisAlignedBounds(const FBox& Bounds) const;
-	UE::Geometry::FAxisAlignedBox3d GetObjectIDAxisAlignedBounds(const int ObjectID) const;
-	double GetObjectIDDistanceToRay(int ObjectID, const FRay3d& Ray) const;
+	[[nodiscard]] UObject* GetObjectFromID(const int ObjectID) const;
+	[[nodiscard]] UE::Geometry::FAxisAlignedBox3d BoxBoundsToAxisAlignedBounds(const FBox& Bounds) const;
+	[[nodiscard]] UE::Geometry::FAxisAlignedBox3d GetObjectIDAxisAlignedBounds(const int ObjectID) const;
+	[[nodiscard]] double GetObjectIDDistanceToRay(const int ObjectID, const FRay3d& Ray) const;
+	[[nodiscard]] double GetObjectIDDistanceToRayForClass(const int ObjectID, const FRay3d& Ray, const TSubclassOf<UObject> Class) const;
 
 };
