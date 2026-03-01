@@ -5,4 +5,5 @@
 
 void IDynamicOctreeObjectInterface::GetWorldBounds_Implementation(FBox& Bounds) const
 {
+	Bounds = FBox(EForceInit::ForceInitToZero);
 }
