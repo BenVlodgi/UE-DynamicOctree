@@ -16,20 +16,17 @@ UDynamicOctree::UDynamicOctree()
 }
 
 
-void UDynamicOctree::InitializeOctree(const bool bForce)
+void UDynamicOctree::InitializeOctree()
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(InitializeOctree);
 
-	if (!bOctreeInitialized || bForce)
-	{
-		Octree = UE::Geometry::FSparseDynamicOctree3();
+	Octree = UE::Geometry::FSparseDynamicOctree3();
 
-		Octree.RootDimension = RootDimensionSize;
-		Octree.MaxExpandFactor = MaxExpandFactor;
-		Octree.SetMaxTreeDepth(MaxTreeDepth);
+	Octree.RootDimension = RootDimensionSize;
+	Octree.MaxExpandFactor = MaxExpandFactor;
+	Octree.SetMaxTreeDepth(MaxTreeDepth);
 
-		bOctreeInitialized = true;
-	}
+	bOctreeInitialized = true;
 }
 
 
@@ -38,7 +35,7 @@ void UDynamicOctree::Rebuild()
 	TRACE_CPUPROFILER_EVENT_SCOPE(Rebuild);
 
 	// Clears Octree.
-	InitializeOctree(true);
+	InitializeOctree();
 
 	// Remove any invalid objects.
 	ObjectIDToObjectMap = ObjectIDToObjectMap.FilterByPredicate(
@@ -87,7 +84,7 @@ void UDynamicOctree::RemoveInvalidObjects()
 void UDynamicOctree::Empty()
 {
 	ObjectIDToObjectMap.Empty();
-	InitializeOctree(true);
+	InitializeOctree();
 }
 
 
@@ -131,7 +128,7 @@ bool UDynamicOctree::AddOrUpdateObject(UObject* Object)
 	const int ObjectID = Object->GetUniqueID();
 	const UE::Geometry::FAxisAlignedBox3d AxisAlignedBox3dBounds = BoxBoundsToAxisAlignedBounds(ObjectBoundsBox);
 	
-	uint32 SuggestedCellID = -1;
+	uint32 SuggestedCellID = INDEX_NONE;
 
 	if (!Octree.ContainsObject(ObjectID))
 	{
@@ -209,11 +206,7 @@ TArray<UObject*> UDynamicOctree::GetObjectsInArea(const FBox& QueryBounds, const
 			{
 				// Strictly test AABB
 				FBox ObjectBounds;
-				GetObjectBounds(Object, ObjectBounds);
-
-				// AABB test object bounds to query bounds
-				if (!QueryBounds.Intersect(ObjectBounds))
-
+				if (!GetObjectBounds(Object, ObjectBounds) || !QueryBounds.Intersect(ObjectBounds))
 				{
 					continue;
 				}
@@ -242,7 +235,7 @@ UObject* UDynamicOctree::FindNearestHitObject(const FVector Start, const FVector
 		HitObjectID = Octree.FindNearestHitObject(
 			Ray,
 			[this](const int ID) { return GetObjectIDAxisAlignedBounds(ID); },
-			[this, Class](const int ID, const FRay3d& Ray) { return GetObjectIDDistanceToRayForClass(ID, Ray, Class); },
+			[this, Class](const int ID, const FRay3d& Ray) { return GetObjectIDRayHitDistanceForClass(ID, Ray, Class); },
 			UseMaxDistance
 		);
 	}
@@ -251,7 +244,7 @@ UObject* UDynamicOctree::FindNearestHitObject(const FVector Start, const FVector
 		HitObjectID = Octree.FindNearestHitObject(
 			Ray,
 			[this](const int ID) { return GetObjectIDAxisAlignedBounds(ID); },
-			[this](const int ID, const FRay3d& Ray) { return GetObjectIDDistanceToRay(ID, Ray); },
+			[this](const int ID, const FRay3d& Ray) { return GetObjectIDRayHitDistance(ID, Ray); },
 			UseMaxDistance
 		);
 	}
@@ -355,7 +348,7 @@ UE::Geometry::FAxisAlignedBox3d UDynamicOctree::GetObjectIDAxisAlignedBounds(con
 }
 
 
-double UDynamicOctree::GetObjectIDDistanceToRay(const int ObjectID, const FRay3d& Ray) const
+double UDynamicOctree::GetObjectIDRayHitDistance(const int ObjectID, const FRay3d& Ray) const
 {
 	const UObject* Object = GetObjectFromID(ObjectID);
 	if (IsValid(Object))
@@ -363,21 +356,21 @@ double UDynamicOctree::GetObjectIDDistanceToRay(const int ObjectID, const FRay3d
 		FBox ObjectBoundsBox;
 		if (GetObjectBounds(Object, ObjectBoundsBox))
 		{
-			return Ray.Dist(ObjectBoundsBox.GetCenter());
+			double RayDistance;
+			const UE::Geometry::FAxisAlignedBox3d AxisAlignedBox(ObjectBoundsBox.Min, ObjectBoundsBox.Max);
+			return UE::Geometry::FIntrRay3AxisAlignedBox3d::FindIntersection(Ray, AxisAlignedBox, RayDistance) ? RayDistance : TNumericLimits<double>::Max();
 		}
 	}
 
 	return TNumericLimits<double>::Max();
 }
 
-double UDynamicOctree::GetObjectIDDistanceToRayForClass(const int ObjectID, const FRay3d& Ray, const TSubclassOf<UObject> Class) const
+double UDynamicOctree::GetObjectIDRayHitDistanceForClass(const int ObjectID, const FRay3d& Ray, const TSubclassOf<UObject> Class) const
 {
-	checkCode(
-		if (!ensureMsgf(Class != nullptr, TEXT("GetObjectIDDistanceToRayForClass: Class cannot be null")))
-		{
-			return TNumericLimits<double>::Max();
-		}
-	);
+	if (!ensureMsgf(Class != nullptr, TEXT("GetObjectIDRayHitDistanceForClass: Class cannot be null")))
+	{
+		return TNumericLimits<double>::Max();
+	}
 
 	const UObject* Object = GetObjectFromID(ObjectID);
 	if (IsValid(Object))
@@ -390,7 +383,9 @@ double UDynamicOctree::GetObjectIDDistanceToRayForClass(const int ObjectID, cons
 		FBox ObjectBoundsBox;
 		if (GetObjectBounds(Object, ObjectBoundsBox))
 		{
-			return Ray.Dist(ObjectBoundsBox.GetCenter());
+			double RayDistance;
+			const UE::Geometry::FAxisAlignedBox3d AxisAlignedBox(ObjectBoundsBox.Min, ObjectBoundsBox.Max);
+			return UE::Geometry::FIntrRay3AxisAlignedBox3d::FindIntersection(Ray, AxisAlignedBox, RayDistance) ? RayDistance : TNumericLimits<double>::Max();
 		}
 	}
 

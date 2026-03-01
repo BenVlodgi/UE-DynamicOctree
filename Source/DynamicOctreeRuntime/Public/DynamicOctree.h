@@ -45,15 +45,15 @@ protected:
 
 public:
 
-	/** Root dimension size of the octree. */
+	/** World-space size of the octree root cell. Call Rebuild() or Empty() after changing. */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dynamic Octree")
 	double RootDimensionSize = 10000.0;
 
-	/** Fraction we expand the dimension of any cell, to allow extra space to fit objects. */
+	/** Fraction we expand the dimension of any cell, to allow extra space to fit objects. Call Rebuild() or Empty() after changing. */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dynamic Octree")
 	double MaxExpandFactor = 0.25;
 
-	/** Objects will not be inserted more than this many levels deep from a Root cell. */
+	/** Objects will not be inserted more than this many levels deep from a Root cell. Call Rebuild() or Empty() after changing. */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dynamic Octree")
 	int MaxTreeDepth = 10;
 
@@ -62,27 +62,23 @@ public:
 
 	UDynamicOctree();
 
-
 	/**
-	 * Clears the octree and initializes it with current parameters.
+	 * @deprecated Use Rebuild() to reapply configuration while preserving objects.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
-	void InitializeOctree(const bool bForce = false);
-
+	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree", meta = (DeprecatedFunction, DeprecationMessage = "Use Rebuild() to reapply configuration while preserving objects."))
+	void InitializeOctree();
 
 	/**
-	 * Rebuilds the Octree Structure, maintaining the objects already added..
+	 * Rebuilds the Octree Structure, maintaining the objects already added.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
 	void Rebuild();
-
 
 	/**
 	 * Removes Invalid Objects from the collection.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
 	void RemoveInvalidObjects();
-
 
 	/**
 	 * Erases all data in this collection.
@@ -161,13 +157,21 @@ public:
 
 protected:
 
+	/**
+	 * Resolves the world-space AABB for an object.
+	 * Supports AActor, USceneComponent, and objects implementing UDynamicOctreeObjectInterface.
+	 *
+	 * @param Object  The object to query.
+	 * @param Bounds  Out parameter filled with the object's bounding box.
+	 * @return True if bounds were successfully retrieved.
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Dynamic Octree")
 	bool GetObjectBounds(const UObject* Object, FBox& Bounds) const;
 
 	[[nodiscard]] UObject* GetObjectFromID(const int ObjectID) const;
 	[[nodiscard]] UE::Geometry::FAxisAlignedBox3d BoxBoundsToAxisAlignedBounds(const FBox& Bounds) const;
 	[[nodiscard]] UE::Geometry::FAxisAlignedBox3d GetObjectIDAxisAlignedBounds(const int ObjectID) const;
-	[[nodiscard]] double GetObjectIDDistanceToRay(const int ObjectID, const FRay3d& Ray) const;
-	[[nodiscard]] double GetObjectIDDistanceToRayForClass(const int ObjectID, const FRay3d& Ray, const TSubclassOf<UObject> Class) const;
+	[[nodiscard]] double GetObjectIDRayHitDistance(const int ObjectID, const FRay3d& Ray) const;
+	[[nodiscard]] double GetObjectIDRayHitDistanceForClass(const int ObjectID, const FRay3d& Ray, const TSubclassOf<UObject> Class) const;
 
 };
