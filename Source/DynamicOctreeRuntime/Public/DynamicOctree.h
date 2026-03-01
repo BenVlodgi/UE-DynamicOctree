@@ -39,21 +39,21 @@ protected:
 	UPROPERTY()
 	TMap<int32, TWeakObjectPtr<UObject>> ObjectIDToObjectMap;
 
-	//** True once the Octree is initialized and shouldn't have its structure changed. */
+	/** True once the Octree is initialized and shouldn't have its structure changed. */
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Dynamic Octree")
 	bool bOctreeInitialized;
 
 public:
 
-	//** */
+	/** Root dimension size of the octree. */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dynamic Octree")
 	double RootDimensionSize = 10000.0;
 
-	//** Fraction we expand the dimension of any cell, to allow extra space to fit objects. */
+	/** Fraction we expand the dimension of any cell, to allow extra space to fit objects. */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dynamic Octree")
 	double MaxExpandFactor = 0.25;
 
-	//** Objects will not be inserted more than this many levels deep from a Root cell. */
+	/** Objects will not be inserted more than this many levels deep from a Root cell. */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dynamic Octree")
 	int MaxTreeDepth = 10;
 
