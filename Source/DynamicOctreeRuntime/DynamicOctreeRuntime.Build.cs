@@ -17,8 +17,6 @@ public class DynamicOctreeRuntime : ModuleRules
         {
             "CoreUObject",
             "Engine",
-            "Slate",
-            "SlateCore",
             "GeometryCore",
         });
     }
